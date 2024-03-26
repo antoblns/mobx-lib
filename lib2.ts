@@ -18,20 +18,23 @@ export function useLib(
     vars = []
 ): any {
     function Return(ret) {
+        // dev mode
+        if (
+            Object.keys(ret).filter((key) => store[kw].hasOwnProperty(key))
+                .length > 0
+        ) {
+            console.log("duplicating call or cant override");
+            return;
+        }
+
         extendObservable(store[kw], ret);
     }
-    const disposables = [];
+    const [disposables, setDisp] = useState([]);
     function onDispose(cb) {
-        disposables.push(cb);
+        setDisp((v) => [...v, cb]);
     }
     const [, forceRender] = useState(0);
-    if (!store[kw] && startup) {
-        store[kw] = observable(
-            { loading: true, vars: [...vars] },
-            {},
-            { deep: false }
-        );
-    }
+
     function createReactiveVar(param = {}) {
         const new_var = observable(param);
         store[kw].vars.push(new_var); // for further cleanup
@@ -39,12 +42,19 @@ export function useLib(
     }
     const start = flow(function* () {
         if (startup) {
-            yield action(startup)({
-                Return,
-                store,
-                createReactiveVar,
-                onDispose,
-            });
+            if (!store[kw]) {
+                store[kw] = observable(
+                    { loading: true, vars: [...vars] },
+                    {},
+                    { deep: false }
+                );
+                yield action(startup)({
+                    Return,
+                    store,
+                    createReactiveVar,
+                    onDispose,
+                });
+            }
             store[kw].loading = false;
         }
     });

@@ -21,13 +21,16 @@ import { useLib } from "./lib2";
 
 function App() {
     // Don't destructure unless deliberetly operate with nested observables! store is not used in this component but e.g. store.data can be rendered.
+    useLib("user", async ({ Return }) => {
+        Return({ userId: "rfger" });
+    });
     const store = useLib(
         "queryItems",
         async ({ Return, store, onDispose, createReactiveVar }) => {
             const queryItems = createReactiveVar({
                 items: [],
                 get pending() {
-                    return this.items.filter((i) => i.status == 2);
+                    return this.items.filter((i) => i.status == 1);
                 },
             });
             // put it before async calls for child components to recieve api

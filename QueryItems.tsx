@@ -24,15 +24,15 @@ export default observer<any>(() => {
                 const fetches = queryItems.pending.map(async (item) => {
                     const response = await fetch(
                         `/api/${userStore.userId}/items/status?id=${item.id}`
-                    );
-                    // potential memory leak if queryItems is not GC'd in case this component unmounted
+                    ).then((r) => r.json());
+                    // potential memory leak if queryItems is not GC'd in case this component unmounted so do dispose
                     item.status = response.status;
                 });
                 if (fetches.length) {
                     await Promise.all(fetches);
                 }
             },
-            { delay: 5000 } // polling evrey 5 sec
+            { delay: 1000 } // polling evrey 5 sec
         );
         onDispose(() => {
             dispose();
@@ -42,7 +42,7 @@ export default observer<any>(() => {
     return (
         queryItemsStore.loading ||
         queryItemsStore.queryItems.items.map((item) => (
-            <ListItem disablePadding key={item.title}>
+            <ListItem disablePadding key={item.id}>
                 <ListItemButton>
                     <ListItemIcon>
                         {item?.status === 2 ? (
